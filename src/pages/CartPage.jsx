@@ -16,6 +16,17 @@ import {
 import { DeleteIcon, CartIcon } from '@shopify/polaris-icons';
 import { useCart } from '../context/CartContext';
 import { MOCK_PRODUCTS } from '../api/shopify';
+import Seo from '../components/Seo';
+
+const isCheckoutUrlSafe = (url) => {
+  if (!url || url.startsWith('#')) return false;
+  try {
+    const parsed = new URL(url);
+    return ['http:', 'https:'].includes(parsed.protocol);
+  } catch {
+    return false;
+  }
+};
 
 function getProductInfo(variantId) {
   for (const product of MOCK_PRODUCTS) {
@@ -130,8 +141,8 @@ export default function CartPage() {
   } = useCart();
 
   const handleCheckout = useCallback(() => {
-    if (checkoutUrl && checkoutUrl !== '#checkout-not-configured') {
-      window.location.href = checkoutUrl;
+    if (isCheckoutUrlSafe(checkoutUrl)) {
+      window.location.assign(checkoutUrl);
     } else {
       alert(
         'Checkout is not configured. Please set your Shopify credentials in .env to enable checkout.'
@@ -164,6 +175,11 @@ export default function CartPage() {
         title="Your Cart"
         backAction={{ content: 'Continue Shopping', onAction: () => navigate('/') }}
       >
+        <Seo
+          title="Your Cart"
+          description="Review the items in your KnitWear Co. cart."
+          robots="noindex, follow"
+        />
         <EmptyState
           heading="Your cart is empty"
           action={{
@@ -195,6 +211,11 @@ export default function CartPage() {
         icon: CartIcon,
       }}
     >
+      <Seo
+        title="Your Cart"
+        description="Review the items in your KnitWear Co. cart."
+        robots="noindex, follow"
+      />
       <InlineGrid columns={{ xs: 1, md: '2fr 1fr' }} gap="400">
         {/* Cart Items */}
         <BlockStack gap="400">

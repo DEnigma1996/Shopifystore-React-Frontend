@@ -19,8 +19,9 @@ import {
   List,
 } from '@shopify/polaris';
 import { CartIcon } from '@shopify/polaris-icons';
-import { fetchProductByHandle, MOCK_PRODUCTS } from '../api/shopify';
+import { fetchProductByHandle, fetchRelatedProducts } from '../api/shopify';
 import { useCart } from '../context/CartContext';
+import Seo from '../components/Seo';
 
 export default function ProductPage() {
   const { handle } = useParams();
@@ -32,9 +33,11 @@ export default function ProductPage() {
   const [selectedImage, setSelectedImage] = useState(0);
   const [toastActive, setToastActive] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const [relatedProducts, setRelatedProducts] = useState([]);
 
   useEffect(() => {
     setLoading(true);
+    setRelatedProducts([]);
     fetchProductByHandle(handle)
       .then((p) => {
         setProduct(p);
@@ -42,6 +45,17 @@ export default function ProductPage() {
       })
       .finally(() => setLoading(false));
   }, [handle]);
+
+  useEffect(() => {
+    if (!product?.id) return;
+    fetchRelatedProducts(product.id, 4)
+      .then((items) =>
+        setRelatedProducts(
+          items.filter((item) => item.handle !== product.handle)
+        )
+      )
+      .catch(() => setRelatedProducts([]));
+  }, [product]);
 
   const handleAddToCart = useCallback(async () => {
     if (!product) return;
@@ -55,17 +69,13 @@ export default function ProductPage() {
 
   const dismissToast = useCallback(() => setToastActive(false), []);
 
-  // Related products (other products, excluding current)
-  const relatedProducts = MOCK_PRODUCTS.filter(
-    (p) => p.handle !== handle
-  ).slice(0, 4);
-
   if (loading) {
     return (
       <Page
         title="Loading product…"
         backAction={{ content: 'Back', onAction: () => navigate(-1) }}
       >
+        <Seo title="Loading product…" />
         <Card>
           <InlineStack gap="800" blockAlign="start" wrap={false}>
             <div style={{ flex: '1', minWidth: 280 }}>
@@ -89,6 +99,10 @@ export default function ProductPage() {
         title="Product Not Found"
         backAction={{ content: 'Back', onAction: () => navigate(-1) }}
       >
+        <Seo
+          title="Product Not Found"
+          description="The product you are looking for could not be found."
+        />
         <EmptyState
           heading="Product not found"
           action={{ content: 'Continue shopping', onAction: () => navigate('/') }}
@@ -105,6 +119,27 @@ export default function ProductPage() {
   const currency = variant?.price?.currencyCode ?? 'USD';
   const available = variant?.available !== false;
   const images = product.images || [];
+  const structuredData =
+    product && price
+      ? {
+          '@context': 'https://schema.org',
+          '@type': 'Product',
+          name: product.title,
+          description: product.description,
+          image: images.map((img) => img.src),
+          sku: variant?.id,
+          brand: product.vendor ? { '@type': 'Brand', name: product.vendor } : undefined,
+          offers: {
+            '@type': 'Offer',
+            availability: available
+              ? 'https://schema.org/InStock'
+              : 'https://schema.org/OutOfStock',
+            price: parseFloat(price),
+            priceCurrency: currency,
+            url: `${window.location.origin}/products/${product.handle}`,
+          },
+        }
+      : undefined;
 
   const toastMarkup = toastActive ? (
     <Toast content={toastMessage} onDismiss={dismissToast} duration={3000} />
@@ -117,6 +152,13 @@ export default function ProductPage() {
         title={product.title}
         backAction={{ content: 'Back', onAction: () => navigate(-1) }}
       >
+        <Seo
+          title={product.title}
+          description={product.description}
+          image={images[0]?.src}
+          type="product"
+          structuredData={structuredData}
+        />
         <BlockStack gap="600">
           {/* Main Product Section */}
           <Card>

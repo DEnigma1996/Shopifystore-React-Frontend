@@ -128,7 +128,9 @@ export default function ProductPage() {
           description: product.description,
           image: images.map((img) => img.src),
           sku: variant?.id,
-          brand: product.vendor ? { '@type': 'Brand', name: product.vendor } : undefined,
+          ...(product.vendor
+            ? { brand: { '@type': 'Brand', name: product.vendor } }
+            : {}),
           offers: {
             '@type': 'Offer',
             availability: available

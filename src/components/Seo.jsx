@@ -54,13 +54,13 @@ const upsertStructuredData = (data) => {
     if (existing) existing.remove();
     return;
   }
-  const element =
-    existing ?? Object.assign(document.createElement('script'), {
-      id: 'structured-data',
-      type: 'application/ld+json',
-    });
+  const element = existing ?? document.createElement('script');
+  if (!existing) {
+    element.id = 'structured-data';
+    element.type = 'application/ld+json';
+    document.head.appendChild(element);
+  }
   element.textContent = JSON.stringify(data);
-  if (!existing) document.head.appendChild(element);
 };
 
 export default function Seo({

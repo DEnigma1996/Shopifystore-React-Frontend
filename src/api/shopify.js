@@ -294,12 +294,14 @@ export async function fetchCollectionByHandle(handle) {
   return MOCK_COLLECTIONS.find((c) => c.handle === handle) || null;
 }
 
-const normalizeSearchQuery = (value) =>
-  value
+const normalizeSearchQuery = (value) => {
+  if (!value) return '';
+  return value
     .trim()
     .replace(/["\\]+/g, '')
     .replace(/\s+/g, ' ')
     .slice(0, 80);
+};
 
 const buildShopifySearchQuery = (value) => {
   const sanitized = normalizeSearchQuery(value);

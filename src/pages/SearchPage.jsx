@@ -11,10 +11,12 @@ import {
   InlineStack,
   TextField,
   Button,
+  Banner,
 } from '@shopify/polaris';
 import { SearchIcon } from '@shopify/polaris-icons';
 import { searchProducts } from '../api/shopify';
 import ProductCard from '../components/ProductCard';
+import Seo from '../components/Seo';
 
 export default function SearchPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -25,14 +27,26 @@ export default function SearchPage() {
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    if (!query) return;
+    if (!query) {
+      setResults([]);
+      setLoading(false);
+      setSearched(false);
+      setError('');
+      return;
+    }
     setInputValue(query);
     setLoading(true);
     setSearched(false);
+    setError('');
     searchProducts(query)
       .then(setResults)
+      .catch((err) => {
+        setResults([]);
+        setError(err?.message || 'Unable to load search results right now.');
+      })
       .finally(() => {
         setLoading(false);
         setSearched(true);
@@ -42,6 +56,8 @@ export default function SearchPage() {
   const handleSearch = () => {
     if (inputValue.trim()) {
       setSearchParams({ q: inputValue.trim() });
+    } else {
+      setSearchParams({});
     }
   };
 
@@ -54,6 +70,15 @@ export default function SearchPage() {
       title="Search"
       backAction={{ content: 'Home', onAction: () => navigate('/') }}
     >
+      <Seo
+        title={query ? `Search results for "${query}"` : 'Search'}
+        description={
+          query
+            ? `Search results for "${query}" at KnitWear Co.`
+            : 'Search the KnitWear Co. catalog for cozy knitwear.'
+        }
+        robots="noindex, follow"
+      />
       <BlockStack gap="500">
         {/* Search Input */}
         <Card>
@@ -71,6 +96,8 @@ export default function SearchPage() {
                   setInputValue('');
                   setResults([]);
                   setSearched(false);
+                  setSearchParams({});
+                  setError('');
                 }}
               />
             </div>
@@ -86,6 +113,11 @@ export default function SearchPage() {
         </Card>
 
         {/* Results */}
+        {error && (
+          <Banner tone="critical" title="Search unavailable">
+            <p>{error}</p>
+          </Banner>
+        )}
         {loading && (
           <Grid columns={{ xs: 1, sm: 2, md: 3, lg: 4 }}>
             {[1, 2, 3, 4].map((i) => (

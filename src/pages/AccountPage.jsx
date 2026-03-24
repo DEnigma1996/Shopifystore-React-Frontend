@@ -10,6 +10,7 @@ import {
   Divider,
 } from '@shopify/polaris';
 import { PersonIcon } from '@shopify/polaris-icons';
+import Seo from '../components/Seo';
 
 export default function AccountPage() {
   const navigate = useNavigate();
@@ -19,6 +20,11 @@ export default function AccountPage() {
       title="My Account"
       backAction={{ content: 'Home', onAction: () => navigate('/') }}
     >
+      <Seo
+        title="My Account"
+        description="Sign in to manage your KnitWear Co. account, orders, and saved items."
+        robots="noindex, follow"
+      />
       <BlockStack gap="400">
         <Banner tone="info" title="Account Management">
           <p>

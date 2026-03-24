@@ -16,6 +16,7 @@ import {
 } from '@shopify/polaris';
 import { fetchCollectionByHandle } from '../api/shopify';
 import ProductCard from '../components/ProductCard';
+import Seo from '../components/Seo';
 
 const SORT_OPTIONS = [
   { label: 'Featured', value: 'featured' },
@@ -62,7 +63,13 @@ export default function CollectionPage() {
     ? sortProducts(collection.products || [], sortValue)
     : [];
 
-  const title = collection?.title ?? (handle === 'mens' ? "Men's Collection" : "Women's Collection");
+  const title =
+    collection?.title ??
+    (handle === 'mens' ? "Men's Collection" : "Women's Collection");
+  const description =
+    collection?.description ||
+    `Browse ${title} at KnitWear Co. Discover cozy, handcrafted knitwear.`;
+  const image = collection?.image?.src;
 
   if (loading) {
     return (
@@ -70,6 +77,7 @@ export default function CollectionPage() {
         title={title}
         backAction={{ content: 'Home', onAction: () => navigate('/') }}
       >
+        <Seo title={title} description={description} image={image} />
         <Card>
           <BlockStack gap="400">
             <SkeletonDisplayText size="large" />
@@ -94,6 +102,10 @@ export default function CollectionPage() {
         title="Collection Not Found"
         backAction={{ content: 'Home', onAction: () => navigate('/') }}
       >
+        <Seo
+          title="Collection Not Found"
+          description="The collection you are looking for could not be found."
+        />
         <EmptyState
           heading="Collection not found"
           action={{ content: 'Browse all products', onAction: () => navigate('/') }}
@@ -111,6 +123,7 @@ export default function CollectionPage() {
       subtitle={`${sortedProducts.length} product${sortedProducts.length !== 1 ? 's' : ''} · One Size Fits All`}
       backAction={{ content: 'Home', onAction: () => navigate('/') }}
     >
+      <Seo title={title} description={description} image={image} />
       <BlockStack gap="400">
         {/* Collection Banner */}
         {collection.image && (

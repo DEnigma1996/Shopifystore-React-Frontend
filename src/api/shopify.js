@@ -278,7 +278,7 @@ export async function fetchProductByHandle(handle) {
 
 export async function fetchAllCollections() {
   if (shopifyClient) {
-    const collections = await shopifyClient.collection.fetchAllWithProducts();
+    const collections = await shopifyClient.collection.fetchAll(20);
     return collections;
   }
   return MOCK_COLLECTIONS;
@@ -286,26 +286,40 @@ export async function fetchAllCollections() {
 
 export async function fetchCollectionByHandle(handle) {
   if (shopifyClient) {
-    const collections = await shopifyClient.collection.fetchAllWithProducts();
-    return collections.find(
-      (c) => c.handle === handle || c.id === handle
-    ) || null;
+    const collection = await shopifyClient.collection.fetchByHandle(handle);
+    if (collection) return collection;
+    const collections = await shopifyClient.collection.fetchAll(20);
+    return collections.find((c) => c.id === handle) || null;
   }
   return MOCK_COLLECTIONS.find((c) => c.handle === handle) || null;
 }
 
+const normalizeSearchQuery = (value) => {
+  if (!value) return '';
+  return value
+    .trim()
+    .replace(/["\\]+/g, '')
+    .replace(/\s+/g, ' ')
+    .slice(0, 80);
+};
+
+const buildShopifySearchQuery = (value) => {
+  const sanitized = normalizeSearchQuery(value);
+  if (!sanitized) return '';
+  return `title:*${sanitized}* OR product_type:*${sanitized}* OR tag:*${sanitized}*`;
+};
+
 export async function searchProducts(query) {
+  const sanitized = normalizeSearchQuery(query);
+  if (!sanitized) return [];
   if (shopifyClient) {
-    const products = await shopifyClient.product.fetchAll(250);
-    const q = query.toLowerCase();
-    return products.filter(
-      (p) =>
-        p.title.toLowerCase().includes(q) ||
-        p.description?.toLowerCase().includes(q) ||
-        p.productType?.toLowerCase().includes(q)
-    );
+    const products = await shopifyClient.product.fetchQuery({
+      first: 40,
+      query: buildShopifySearchQuery(sanitized),
+    });
+    return products;
   }
-  const q = query.toLowerCase();
+  const q = sanitized.toLowerCase();
   return MOCK_PRODUCTS.filter(
     (p) =>
       p.title.toLowerCase().includes(q) ||
@@ -313,6 +327,16 @@ export async function searchProducts(query) {
       p.productType.toLowerCase().includes(q) ||
       p.tags.some((t) => t.toLowerCase().includes(q))
   );
+}
+
+export async function fetchRelatedProducts(productId, limit = 4) {
+  if (shopifyClient && productId) {
+    const products = await shopifyClient.product.fetchProductRecommendations(
+      productId
+    );
+    return products.slice(0, limit);
+  }
+  return MOCK_PRODUCTS.filter((p) => p.id !== productId).slice(0, limit);
 }
 
 // ---------------------------------------------------------------------------

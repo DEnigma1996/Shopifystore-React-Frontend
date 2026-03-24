@@ -14,12 +14,14 @@ import {
   SkeletonDisplayText,
   InlineGrid,
 } from '@shopify/polaris';
-import { fetchAllProducts, MOCK_COLLECTIONS } from '../api/shopify';
+import { fetchAllCollections, fetchAllProducts } from '../api/shopify';
 import ProductCard from '../components/ProductCard';
+import Seo from '../components/Seo';
 
 export default function HomePage() {
   const navigate = useNavigate();
   const [featuredProducts, setFeaturedProducts] = useState([]);
+  const [collections, setCollections] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -30,8 +32,17 @@ export default function HomePage() {
       .finally(() => setLoading(false));
   }, []);
 
+  useEffect(() => {
+    fetchAllCollections()
+      .then((data) => {
+        setCollections(data.slice(0, 2));
+      })
+      .catch(() => setCollections([]));
+  }, []);
+
   return (
     <Page>
+      <Seo />
       {/* Hero Section */}
       <div
         style={{
@@ -104,7 +115,7 @@ export default function HomePage() {
             Shop by Collection
           </Text>
           <InlineGrid columns={{ xs: 1, sm: 2 }} gap="400">
-            {MOCK_COLLECTIONS.map((collection) => (
+            {collections.map((collection) => (
               <div
                 key={collection.id}
                 onClick={() => navigate(`/collections/${collection.handle}`)}

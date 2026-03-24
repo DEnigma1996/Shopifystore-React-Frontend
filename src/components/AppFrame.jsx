@@ -43,7 +43,9 @@ export default function AppFrame({ children }) {
 
   const handleSearchSubmit = useCallback(
     (e) => {
-      if (e.key === 'Enter' && searchValue.trim()) {
+      const isSearchInput =
+        e.target?.tagName === 'INPUT' && e.target?.type === 'search';
+      if (isSearchInput && e.key === 'Enter' && searchValue.trim()) {
         navigate(`/search?q=${encodeURIComponent(searchValue.trim())}`);
         setSearchActive(false);
         setSearchValue('');
